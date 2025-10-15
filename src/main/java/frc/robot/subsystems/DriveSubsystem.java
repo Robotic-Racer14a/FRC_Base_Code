@@ -41,6 +41,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
+    private boolean useMT1, useMT2;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -71,6 +72,10 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     @Override
     public void periodic() {
+
+        if (useMT1) updatePoseWithMT1();
+        else if (useMT2) updatePoseWithMT2();
+        
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -92,6 +97,16 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     public Pose2d getCurrentPose() {
         return this.getState().Pose;
+    }
+
+    public void setUseMT1(boolean useMT1) {
+        if (useMT1) useMT2 = false;
+        this.useMT1 = useMT1;
+    }
+    
+    public void setUseMT2(boolean useMT2) {
+        if (useMT2) useMT1 = false;
+        this.useMT2 = useMT2;
     }
 
     public void updatePoseWithMT1() {
