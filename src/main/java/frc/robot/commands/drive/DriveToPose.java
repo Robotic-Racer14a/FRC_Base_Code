@@ -6,23 +6,23 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.IntermediatePoseObject;
 import frc.robot.subsystems.DriveSubsystem;
 
 public class DriveToPose extends Command {
 
     private final DriveSubsystem drive;
     private final Pose2d endPose;
-    private final Pose2d[] intermediatePoses;
+    private final IntermediatePoseObject[] intermediatePoses;
     private  Pose2d targetPose;
     private int stepsLeft;
     private final int numberOfSteps;
-    private double intermediateRadius = 0.5; // In Meters
     private double distanceUntilContinue = 0;
 
     private final PIDController translationalController = new PIDController(0.001, 0, 0);
     private final PhoenixPIDController rotationalController = new PhoenixPIDController(0.001, 0, 0);
     
-    public DriveToPose (DriveSubsystem drive, Pose2d endPose, Pose2d... intermediatePoses) {
+    public DriveToPose (DriveSubsystem drive, Pose2d endPose, IntermediatePoseObject... intermediatePoses) {
         this.drive = drive;
         this.endPose = endPose;
         this.intermediatePoses = intermediatePoses;
@@ -55,16 +55,16 @@ public class DriveToPose extends Command {
         if (stepsLeft == numberOfSteps) {
             targetPose = endPose;
         } else {
-            targetPose = intermediatePoses[numberOfSteps - stepsLeft];
-            Pose2d nextPose = stepsLeft == 1 ? endPose : intermediatePoses[numberOfSteps - stepsLeft - 1];
+            targetPose = intermediatePoses[numberOfSteps - stepsLeft].getIntermediatePose();
+            Pose2d nextPose = stepsLeft == 1 ? endPose : intermediatePoses[numberOfSteps - stepsLeft - 1].getIntermediatePose();
             double angleToPose = angleBetweenPoses(targetPose, currentPose);
             double angleFromPose = angleBetweenPoses(nextPose, currentPose);
             double angleBetweenPoses = angleToPose + angleFromPose;
 
-            distanceUntilContinue = intermediateRadius / Math.tan(angleBetweenPoses / 2);
+            distanceUntilContinue = intermediatePoses[numberOfSteps - stepsLeft].getRadius() / Math.tan(angleBetweenPoses / 2);
         }
 
-        double distanceAway = intermediateRadius == 0 ? distanceBetweenPoses(currentPose, targetPose) : distanceBetweenPoses(currentPose, endPose);
+        double distanceAway = intermediatePoses[numberOfSteps - stepsLeft].getRadius() == 0 ? distanceBetweenPoses(currentPose, targetPose) : distanceBetweenPoses(currentPose, endPose);
         double translationOutput = Math.min(translationalController.calculate(distanceAway, 0), 1);
         
         double angleOfDistance = angleBetweenPoses(currentPose, targetPose);
@@ -78,7 +78,7 @@ public class DriveToPose extends Command {
             .withTargetDirection(endPose.getRotation())
             );
 
-        if (distanceUntilContinue < distanceBetweenPoses(currentPose, targetPose) && !(stepsLeft == numberOfSteps)) {
+        if (distanceUntilContinue > distanceBetweenPoses(currentPose, targetPose) - translationalController.getErrorTolerance() && !(stepsLeft == numberOfSteps)) {
             stepsLeft--;
         }
     }
