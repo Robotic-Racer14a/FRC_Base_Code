@@ -64,7 +64,7 @@ public class DriveToPose extends Command {
             distanceUntilContinue = intermediateRadius / Math.tan(angleBetweenPoses / 2);
         }
 
-        double distanceAway = distanceBetweenPoses(currentPose, endPose);
+        double distanceAway = intermediateRadius == 0 ? distanceBetweenPoses(currentPose, targetPose) : distanceBetweenPoses(currentPose, endPose);
         double translationOutput = Math.min(translationalController.calculate(distanceAway, 0), 1);
         
         double angleOfDistance = angleBetweenPoses(currentPose, targetPose);
@@ -79,7 +79,7 @@ public class DriveToPose extends Command {
             );
 
         if (distanceUntilContinue < distanceBetweenPoses(currentPose, targetPose) && !(stepsLeft == numberOfSteps)) {
-            stepsLeft++;
+            stepsLeft--;
         }
     }
 
@@ -90,7 +90,7 @@ public class DriveToPose extends Command {
 
     @Override
     public boolean isFinished() {
-        return translationalController.atSetpoint() && rotationalController.atSetpoint();
+        return translationalController.atSetpoint() && rotationalController.atSetpoint() && stepsLeft == 1;
     }
 
     public double distanceBetweenPoses(Pose2d pose1, Pose2d pose2) {
