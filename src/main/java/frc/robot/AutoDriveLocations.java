@@ -52,8 +52,9 @@ public class AutoDriveLocations {
     }
 
     public Command autoDriveCommand(DriveSubsystem drive) {
-        Pose2d finalPose, approachPose;
-        boolean goingToIntake = false;
+        IntermediatePoseObject[] poses;
+        Pose2d finalPose, approachPose, sideIntermediatePose = null, backIntermediatePose = null;
+        boolean goingToIntake = false, goingToFarSide, goingToBackSide;
         IntakeLocations targetIntakeLocation = IntakeLocations.LEFT_BACK;
         BranchLocations targetBranchLocation = BranchLocations.BACK;
         BranchModifiers targetBranchModifiers = BranchModifiers.LEFT;
@@ -121,8 +122,17 @@ public class AutoDriveLocations {
             }
         }
 
+
         
         approachPose = finalPose.transformBy(new Transform2d(0, approachOffset, Rotation2d.kZero));
-        return new DriveToPose(drive, finalPose, new IntermediatePoseObject(approachPose));
+        if (backIntermediatePose == null && sideIntermediatePose == null) {
+            return new DriveToPose(drive, finalPose, new IntermediatePoseObject(approachPose));
+        } else if (backIntermediatePose == null){
+            return new DriveToPose(drive, finalPose, new IntermediatePoseObject(sideIntermediatePose, 0.5), new IntermediatePoseObject(approachPose));
+        } else if (sideIntermediatePose == null) {
+            return new DriveToPose(drive, finalPose, new IntermediatePoseObject(backIntermediatePose, 0.5), new IntermediatePoseObject(approachPose));
+        } else {
+            return new DriveToPose(drive, finalPose, new IntermediatePoseObject(approachPose));
+        }
     }
 }
