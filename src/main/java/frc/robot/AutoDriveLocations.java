@@ -96,17 +96,17 @@ public class AutoDriveLocations {
                     if  (allianceColor == Alliance.Blue) finalPose = tags.getTagPose(20).get().toPose2d();
                     else finalPose = tags.getTagPose(11).get().toPose2d();
                 case BACK_RIGHT:
-                    if  (allianceColor == Alliance.Blue) finalPose = tags.getTagPose(21).get().toPose2d();
-                    else finalPose = tags.getTagPose(10).get().toPose2d();
+                    if  (allianceColor == Alliance.Blue) finalPose = tags.getTagPose(22).get().toPose2d();
+                    else finalPose = tags.getTagPose(9).get().toPose2d();
                 case FRONT:
-                    if  (allianceColor == Alliance.Blue) finalPose = tags.getTagPose(21).get().toPose2d();
-                    else finalPose = tags.getTagPose(10).get().toPose2d();
+                    if  (allianceColor == Alliance.Blue) finalPose = tags.getTagPose(18).get().toPose2d();
+                    else finalPose = tags.getTagPose(7).get().toPose2d();
                 case FRONT_LEFT:
-                    if  (allianceColor == Alliance.Blue) finalPose = tags.getTagPose(21).get().toPose2d();
-                    else finalPose = tags.getTagPose(10).get().toPose2d();
+                    if  (allianceColor == Alliance.Blue) finalPose = tags.getTagPose(19).get().toPose2d();
+                    else finalPose = tags.getTagPose(6).get().toPose2d();
                 case FRONT_RIGHT:
-                    if  (allianceColor == Alliance.Blue) finalPose = tags.getTagPose(21).get().toPose2d();
-                    else finalPose = tags.getTagPose(10).get().toPose2d();
+                    if  (allianceColor == Alliance.Blue) finalPose = tags.getTagPose(17).get().toPose2d();
+                    else finalPose = tags.getTagPose(8).get().toPose2d();
                 default:
                     finalPose = new Pose2d(0, 0, Rotation2d.kZero);
             }
