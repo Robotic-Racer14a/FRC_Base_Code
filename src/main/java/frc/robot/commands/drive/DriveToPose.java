@@ -47,7 +47,7 @@ public class DriveToPose extends Command {
     public void initialize() {
         translationalController.setTolerance(Units.inchesToMeters(1));
         rotationalController.setTolerance(Units.degreesToRadians(1));
-        drive.facingAngle.HeadingController = rotationalController;
+        drive.driveToPoseController.HeadingController = rotationalController;
     }
 
     @Override
@@ -90,17 +90,11 @@ public class DriveToPose extends Command {
         angleToPose.transformBy(new Transform2d(0, followingDistance, Rotation2d.kZero));
         angleToPose = new Pose2d(angleToPose.getX(), angleToPose.getY(), targetPose.getRotation());
         
-        //Applies power in the direction set by the angle pose
+        //Sets the direction to drive based off of angle to pose 
         double angleOfDistance = angleBetweenPoses(currentPose, angleToPose);
-        xPow = translationOutput * Math.cos(angleOfDistance);
-        yPow = translationOutput * Math.sin(angleOfDistance);
 
         //Sends power to chassis
-        drive.setControl(
-            drive.facingAngle.withVelocityX(xPow * drive.MaxSpeed)
-            .withVelocityY(yPow * drive.MaxSpeed)
-            .withTargetDirection(endPose.getRotation())
-            );
+        drive.setDriveToPosePower(translationOutput, angleOfDistance, targetPose.getRotation());
 
         //Moves on to the next step once step is complete
         if (distanceUntilContinue > distanceBetweenPoses(currentPose, targetPose) - translationalController.getErrorTolerance() && !(stepsLeft == numberOfSteps)) {

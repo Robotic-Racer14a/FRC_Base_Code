@@ -11,6 +11,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -32,13 +33,15 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     public final SwerveRequest.FieldCentric fieldCentric = new SwerveRequest.FieldCentric()
             .withDriveRequestType(DriveRequestType.Velocity); // Use open-loop control for drive motors
 
-    public final SwerveRequest.FieldCentricFacingAngle facingAngle = new SwerveRequest.FieldCentricFacingAngle()
+    public final SwerveRequest.FieldCentricFacingAngle driveToPoseController = new SwerveRequest.FieldCentricFacingAngle()
             .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
-            .withDriveRequestType(DriveRequestType.Velocity); // Use open-loop control for drive motors
+            .withDriveRequestType(DriveRequestType.Velocity); 
 
     public final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
+    private final double maxAcceleration = 2 * .02; //2 m/s with 20 ms interval
+    private final double maxTranslationalAngleChange = Units.degreesToRadians(180) * .02; //180 degrees per second with 20 ms interval
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
     private boolean useMT1, useMT2;
@@ -99,6 +102,23 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         return this.getState().Pose;
     }
 
+    public void setDriveToPosePower(double targetVelocity, double driveAngle, Rotation2d targetAngle) {
+        double currentVelocity = Math.sqrt(Math.pow(this.getState().Speeds.vyMetersPerSecond, 2) + Math.pow(this.getState().Speeds.vxMetersPerSecond, 2));
+        double currentTranslationAngle = Math.atan2(this.getState().Speeds.vyMetersPerSecond, this.getState().Speeds.vxMetersPerSecond);
+
+        targetVelocity = targetVelocity < currentVelocity ? Math.max(targetVelocity, currentVelocity - maxAcceleration) : Math.min(targetVelocity, currentVelocity + maxAcceleration);
+        driveAngle = driveAngle < currentTranslationAngle ? Math.max(driveAngle, currentTranslationAngle - maxTranslationalAngleChange) : Math.min(driveAngle, currentTranslationAngle + maxTranslationalAngleChange);
+
+        double xPow = targetVelocity * Math.cos(driveAngle);
+        double yPow = targetVelocity * Math.sin(driveAngle);
+
+        this.setControl(
+            driveToPoseController.withVelocityX(xPow)
+            .withVelocityY(yPow)
+            .withTargetDirection(targetAngle)
+            );
+    }
+
     public void setUseMT1(boolean useMT1) {
         if (useMT1) useMT2 = false;
         this.useMT1 = useMT1;
@@ -116,23 +136,20 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
         if(mt1 != null) {
           
-            if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
-            {
-            if(mt1.rawFiducials[0].ambiguity > .7)
-            {
+            if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1) {
+                if(mt1.rawFiducials[0].ambiguity > .7)
+                {
+                    updateVision = false;
+                }
+                if(mt1.rawFiducials[0].distToCamera > 3)
+                {
+                    updateVision = false;
+                }
+            }
+            if(mt1.tagCount == 0) {
                 updateVision = false;
             }
-            if(mt1.rawFiducials[0].distToCamera > 3)
-            {
-                updateVision = false;
-            }
-            }
-            if(mt1.tagCount == 0)
-            {
-                updateVision = false;
-            }
-            if(updateVision)
-            {
+            if(updateVision) {
                 setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,Math.toRadians(1)));
                 addVisionMeasurement(
                     mt1.pose,
@@ -146,8 +163,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         
         LimelightHelpers.SetRobotOrientation("limelight", getCurrentPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt2_blue = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
-        if(Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble()) > 720) // if our angular velocity is greater than 720 degrees per second, ignore vision updates
-        {
+        if(Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble()) > 720) { // if our angular velocity is greater than 720 degrees per second, ignore vision updates
           updateVision = false;
         }
 
