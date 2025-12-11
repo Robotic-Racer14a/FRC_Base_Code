@@ -51,10 +51,11 @@ public class AutoDriveLocations {
         LEVEL_ONE
     }
 
+    @SuppressWarnings("unused")
     public Command autoDriveCommand(DriveSubsystem drive) {
-        IntermediatePoseObject[] poses;
+        DriveToPoseObject[] poses;
         Pose2d finalPose, approachPose, sideIntermediatePose = null, backIntermediatePose = null;
-        boolean goingToIntake = false, goingToFarSide, goingToBackSide;
+        boolean goingToIntake = false, goingToFarSide =  true, goingToBackSide = true, sidePoseFirst = false;
         IntakeLocations targetIntakeLocation = IntakeLocations.LEFT_BACK;
         BranchLocations targetBranchLocation = BranchLocations.BACK;
         BranchModifiers targetBranchModifiers = BranchModifiers.LEFT;
@@ -125,14 +126,40 @@ public class AutoDriveLocations {
 
         
         approachPose = finalPose.transformBy(new Transform2d(0, approachOffset, Rotation2d.kZero));
+
         if (backIntermediatePose == null && sideIntermediatePose == null) {
-            return new DriveToPose(drive, finalPose, new IntermediatePoseObject(approachPose));
+            return new DriveToPose(drive, 
+                new DriveToPoseObject(approachPose), 
+                new DriveToPoseObject(finalPose)
+            );
         } else if (backIntermediatePose == null){
-            return new DriveToPose(drive, finalPose, new IntermediatePoseObject(sideIntermediatePose, 0.5), new IntermediatePoseObject(approachPose));
+            return new DriveToPose(drive, 
+                new DriveToPoseObject(sideIntermediatePose, 0.5), 
+                new DriveToPoseObject(approachPose), 
+                new DriveToPoseObject(finalPose)
+            );
         } else if (sideIntermediatePose == null) {
-            return new DriveToPose(drive, finalPose, new IntermediatePoseObject(backIntermediatePose, 0.5), new IntermediatePoseObject(approachPose));
+            return new DriveToPose(drive, 
+                new DriveToPoseObject(backIntermediatePose, 0.5), 
+                new DriveToPoseObject(approachPose), 
+                new DriveToPoseObject(finalPose)
+            );
         } else {
-            return new DriveToPose(drive, finalPose, new IntermediatePoseObject(approachPose));
+            if (sidePoseFirst) {
+                return new DriveToPose(drive, 
+                    new DriveToPoseObject(backIntermediatePose, 0.5), 
+                    new DriveToPoseObject(sideIntermediatePose, 0.5), 
+                    new DriveToPoseObject(approachPose), 
+                    new DriveToPoseObject(finalPose)
+                );
+            } else {
+                return new DriveToPose(drive, 
+                    new DriveToPoseObject(backIntermediatePose, 0.5), 
+                    new DriveToPoseObject(sideIntermediatePose, 0.5), 
+                    new DriveToPoseObject(approachPose), 
+                    new DriveToPoseObject(finalPose)
+                );
+            }
         }
     }
 }

@@ -8,14 +8,14 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.IntermediatePoseObject;
+import frc.robot.DriveToPoseObject;
 import frc.robot.subsystems.DriveSubsystem;
 
 public class DriveToPose extends Command {
 
     private final DriveSubsystem drive;
-    private final Pose2d endPose;
-    private final IntermediatePoseObject[] intermediatePoses;
+    private final DriveToPoseObject endPose;
+    private final DriveToPoseObject[] targetPoses;
     private  Pose2d targetPose;
     private int stepsLeft;
     private final int numberOfSteps;
@@ -25,23 +25,15 @@ public class DriveToPose extends Command {
     private final PIDController translationalController = new PIDController(0.001, 0, 0);
     private final PhoenixPIDController rotationalController = new PhoenixPIDController(0.001, 0, 0);
     
-    public DriveToPose (DriveSubsystem drive, Pose2d endPose, IntermediatePoseObject... intermediatePoses) {
+    public DriveToPose (DriveSubsystem drive, DriveToPoseObject... intermediatePoses) {
         this.drive = drive;
-        this.endPose = endPose;
-        this.intermediatePoses = intermediatePoses;
+        this.targetPoses = intermediatePoses;
         stepsLeft = intermediatePoses.length;
         numberOfSteps = stepsLeft;
+        this.endPose = intermediatePoses[stepsLeft - 1];
         addRequirements(drive);
     }
 
-    public DriveToPose (DriveSubsystem drive, Pose2d endPose) {
-        this.drive = drive;
-        this.endPose = endPose;
-        this.intermediatePoses = null;
-        stepsLeft = 1;
-        numberOfSteps = 1;
-        addRequirements(drive);
-    }
 
     @Override
     public void initialize() {
@@ -52,38 +44,37 @@ public class DriveToPose extends Command {
 
     @Override
     public void execute() {
-        double xPow = 0, yPow = 0;
         Pose2d currentPose = drive.getCurrentPose();
         
         //Determines target pose and when to move to the next pose
-        if (stepsLeft == numberOfSteps) {
-            targetPose = endPose;
+        if (stepsLeft == 1) {
+            targetPose = endPose.getPose();
         } else {
             //This is done by figuring out the intersection of two tangent lines on a circle
             //Because we know that the Hypotenuse is the same for both triangles, and the radius is one side of the triangle, we know that both triangles are identical
             //This allows us to determine the other side, which is our distance away from intersection point to where we move on to next line
             //Ask Alex Clute if you have any questions
 
-            targetPose = intermediatePoses[numberOfSteps - stepsLeft].getIntermediatePose();
-            Pose2d nextPose = stepsLeft == 1 ? endPose : intermediatePoses[numberOfSteps - stepsLeft - 1].getIntermediatePose();
+            targetPose = targetPoses[numberOfSteps - stepsLeft].getPose();
+            Pose2d nextPose = targetPoses[numberOfSteps - stepsLeft - 1].getPose();
             double angleToPose = angleBetweenPoses(targetPose, currentPose);
             double angleFromPose = angleBetweenPoses(nextPose, currentPose);
             double angleBetweenPoses = angleToPose + angleFromPose;
 
-            distanceUntilContinue = intermediatePoses[numberOfSteps - stepsLeft].getRadius() / Math.tan(angleBetweenPoses / 2);
+            distanceUntilContinue = targetPoses[numberOfSteps - stepsLeft].getRadius() / Math.tan(angleBetweenPoses / 2);
         }
 
         //Determines the speed the robot should be driving with
         //For Continuous moves, we don't want it to slow down, just affect direction
         //For fine moves, we want it to stop at our desired location
-        double distanceAway = intermediatePoses[numberOfSteps - stepsLeft].getRadius() == 0 ? distanceBetweenPoses(currentPose, targetPose) : distanceBetweenPoses(currentPose, endPose);
-        double translationOutput = Math.min(translationalController.calculate(distanceAway, 0), 1);
+        double distanceAway = targetPoses[numberOfSteps - stepsLeft].getRadius() == 0 ? distanceBetweenPoses(currentPose, targetPose) : distanceBetweenPoses(currentPose, endPose.getPose());
+        double translationOutput = Math.min(translationalController.calculate(distanceAway, 0), targetPoses[numberOfSteps - stepsLeft].getPrecentageOutput());
 
         //Determines the distance from target we should be driving towards
         followingDistance = Math.max(distanceAway - followingDistance, 0);
 
         //Determine targetPose with a rotation of the slope between points
-        Pose2d previousPose = stepsLeft + 1 > numberOfSteps ? currentPose : intermediatePoses[numberOfSteps - stepsLeft - 1].getIntermediatePose();
+        Pose2d previousPose = stepsLeft + 1 > numberOfSteps ? currentPose : targetPoses[numberOfSteps - stepsLeft - 1].getPose();
         Pose2d angleToPose = new Pose2d(targetPose.getX(), targetPose.getY(), Rotation2d.fromRadians(angleBetweenPoses(previousPose, targetPose)));
 
         //Offset angleToPose to angle towards correct spot on line, and fix angle to be target angle
