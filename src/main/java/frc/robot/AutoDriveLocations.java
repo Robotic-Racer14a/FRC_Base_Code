@@ -5,9 +5,11 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.commands.drive.CircleToPose;
 import frc.robot.commands.drive.DriveToPose;
 import frc.robot.subsystems.DriveSubsystem;
 
@@ -53,8 +55,7 @@ public class AutoDriveLocations {
 
     @SuppressWarnings("unused")
     public Command autoDriveCommand(DriveSubsystem drive) {
-        DriveToPoseObject[] poses;
-        Pose2d finalPose, approachPose, sideIntermediatePose = null, backIntermediatePose = null;
+        Pose2d finalPose, approachPose;
         boolean goingToIntake = false, goingToFarSide =  true, goingToBackSide = true, sidePoseFirst = false;
         IntakeLocations targetIntakeLocation = IntakeLocations.LEFT_BACK;
         BranchLocations targetBranchLocation = BranchLocations.BACK;
@@ -123,43 +124,11 @@ public class AutoDriveLocations {
             }
         }
 
-
         
         approachPose = finalPose.transformBy(new Transform2d(0, approachOffset, Rotation2d.kZero));
 
-        if (backIntermediatePose == null && sideIntermediatePose == null) {
-            return new DriveToPose(drive, 
-                new DriveToPoseObject(approachPose), 
-                new DriveToPoseObject(finalPose)
-            );
-        } else if (backIntermediatePose == null){
-            return new DriveToPose(drive, 
-                new DriveToPoseObject(sideIntermediatePose, 0.5), 
-                new DriveToPoseObject(approachPose), 
-                new DriveToPoseObject(finalPose)
-            );
-        } else if (sideIntermediatePose == null) {
-            return new DriveToPose(drive, 
-                new DriveToPoseObject(backIntermediatePose, 0.5), 
-                new DriveToPoseObject(approachPose), 
-                new DriveToPoseObject(finalPose)
-            );
-        } else {
-            if (sidePoseFirst) {
-                return new DriveToPose(drive, 
-                    new DriveToPoseObject(backIntermediatePose, 0.5), 
-                    new DriveToPoseObject(sideIntermediatePose, 0.5), 
-                    new DriveToPoseObject(approachPose), 
-                    new DriveToPoseObject(finalPose)
-                );
-            } else {
-                return new DriveToPose(drive, 
-                    new DriveToPoseObject(backIntermediatePose, 0.5), 
-                    new DriveToPoseObject(sideIntermediatePose, 0.5), 
-                    new DriveToPoseObject(approachPose), 
-                    new DriveToPoseObject(finalPose)
-                );
-            }
-        }
+        Pose2d reefCenter = new Pose2d(4.63, 4.12, Rotation2d.kZero);
+        if (allianceColor == Alliance.Red) reefCenter = reefCenter.rotateAround(new Translation2d(8.77, 4.03), Rotation2d.k180deg); //Rotates around center of field
+        return new CircleToPose(drive, reefCenter, 1.9, new DriveToPoseObject(approachPose, 0.5), new DriveToPoseObject(finalPose, 0, 0.5));
     }
 }

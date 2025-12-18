@@ -11,6 +11,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -199,5 +201,30 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     }
 
 
+
+    //Pose Utility Methods (TODO: Move to new location)
+
+    /**
+     * Method gets the distance of a specified point from another point using a third point as a rotational reference
+     * @param measurementPose
+     * @param lineOrigin
+     * @param lineXPos
+     * @return
+     */
+    public Translation2d translationFromLine(Pose2d measurementPose, Pose2d lineOrigin, Pose2d lineXPos) {
+        double lineAngle = Math.atan2(lineXPos.getY() - lineOrigin.getY(), lineXPos.getX() - lineOrigin.getX());
+        lineXPos = lineXPos.rotateAround(lineOrigin.getTranslation(), Rotation2d.fromRadians(-lineAngle));
+        measurementPose = measurementPose.rotateAround(lineOrigin.getTranslation(), Rotation2d.fromRadians(-lineAngle));
+
+        lineXPos = lineXPos.transformBy(new Transform2d(lineOrigin.getTranslation(),  Rotation2d.kZero));
+        measurementPose = measurementPose.transformBy(new Transform2d(lineOrigin.getTranslation(),  Rotation2d.kZero));
+
+        return measurementPose.getTranslation();
+    }
+
+
+    public double distanceFromPose(Pose2d measurementPose, Pose2d origin){
+        return Math.sqrt(Math.pow(measurementPose.getX() - origin.getX(), 2) + Math.pow(measurementPose.getY() - origin.getY(), 2));
+    }
 
 }
