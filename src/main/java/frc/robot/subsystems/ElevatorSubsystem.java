@@ -9,6 +9,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.SystemVariables;
 import frc.robot.SystemVariables.ElevatorConstants;
 
 public class ElevatorSubsystem extends SubsystemBase {
@@ -30,6 +31,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     public void periodic() {
         updatePIDFromDash();
         updateSmartDashboard();
+        SystemVariables.elevatorAtTarget = isElevatorAtTarget();
     }
 
 
@@ -45,6 +47,10 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public double getCurrentPoseInches() {
         return (getCurrentPoseTicks() / ElevatorConstants.TICKS_PER_INCH) - ElevatorConstants.STRINGPOT_ZERO;
+    }
+
+    public boolean isElevatorAtTarget() {
+        return Math.abs(getTargetPose() - getCurrentPoseInches()) < ElevatorConstants.POSE_TOLERANCE;
     }
 
     ///////////////////// Setters ////////////////////////////////
@@ -75,9 +81,9 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     private void updatePIDFromDash() {
         elevatorController.setPID(
-            SmartDashboard.getNumber("ElevatorP", ElevatorConstants.KP),
-            SmartDashboard.getNumber("ElevatorI", ElevatorConstants.KI),
-            SmartDashboard.getNumber("ElevatorD", ElevatorConstants.KD)
+            SmartDashboard.getNumber("Elevator/ElevatorP", ElevatorConstants.KP),
+            SmartDashboard.getNumber("Elevator/ElevatorI", ElevatorConstants.KI),
+            SmartDashboard.getNumber("Elevator/ElevatorD", ElevatorConstants.KD)
         );
     }
 

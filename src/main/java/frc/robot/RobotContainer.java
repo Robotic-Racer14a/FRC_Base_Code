@@ -4,23 +4,23 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.*;
-
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.SwerveRequest;
-
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
+import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.drive.DriveToPose;
 import frc.robot.commands.drive.FieldCentricControl;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.ElevatorSubsystem;
 
 public class RobotContainer {
 
@@ -28,6 +28,7 @@ public class RobotContainer {
     private final CommandXboxController operatorController = new CommandXboxController(1);
     
     public final DriveSubsystem drive = TunerConstants.createDrivetrain();
+    public final ElevatorSubsystem elevator = new ElevatorSubsystem();
 
     private final Telemetry logger = new Telemetry(drive.MaxSpeed);
 
@@ -36,6 +37,21 @@ public class RobotContainer {
 
     public RobotContainer() {
         autoChooser.setDefaultOption("Do Nothing", new WaitCommand(1));
+
+        autoChooser.addOption("Auto One", new ParallelCommandGroup(
+            new InstantCommand(() -> elevator.setTargetPose(30)),
+            new DriveToPose(drive, new Pose2d(0,0, Rotation2d.kZero))
+        ));
+
+        autoChooser.addOption("Auto Two", new SequentialCommandGroup(
+            new InstantCommand(() -> elevator.setTargetPose(30)),
+            new DriveToPose(drive, new Pose2d(0,0, Rotation2d.kZero))
+        ));
+
+        autoChooser.addOption("Auto Three", new ParallelRaceGroup(
+            new WaitCommand(10),
+            new DriveToPose(drive, new Pose2d(0,0, Rotation2d.kZero))
+        ));
 
         SmartDashboard.putData("Auto Mode", autoChooser);
 

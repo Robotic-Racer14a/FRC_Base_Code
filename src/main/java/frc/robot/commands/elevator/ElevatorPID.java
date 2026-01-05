@@ -1,6 +1,7 @@
 package frc.robot.commands.elevator;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.SystemVariables;
 import frc.robot.subsystems.ElevatorSubsystem;
 
 public class ElevatorPID extends Command{
@@ -19,7 +20,11 @@ public class ElevatorPID extends Command{
     
     @Override
     public void execute() {
-        elevator.runWithPID();
+        if (SystemVariables.armClearOfObstacles) {
+            elevator.runWithPID();
+        } else {
+            elevator.setElevatorPower(0);
+        }
     }
     
     @Override
