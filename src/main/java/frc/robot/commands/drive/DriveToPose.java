@@ -57,8 +57,8 @@ public class DriveToPose extends Command {
 
             targetPose = targetPoses[numberOfSteps - stepsLeft].getPose();
             Pose2d nextPose = targetPoses[numberOfSteps - stepsLeft - 1].getPose();
-            double angleToPose = angleBetweenPoses(targetPose, currentPose);
-            double angleFromPose = angleBetweenPoses(nextPose, currentPose);
+            double angleToPose = drive.absoluteAngleFromPose(targetPose, currentPose);
+            double angleFromPose = drive.absoluteAngleFromPose(nextPose, currentPose);
             double angleBetweenPoses = angleToPose + angleFromPose;
 
             distanceUntilContinue = targetPoses[numberOfSteps - stepsLeft].getRadius() / Math.tan(angleBetweenPoses / 2);
@@ -67,7 +67,7 @@ public class DriveToPose extends Command {
         //Determines the speed the robot should be driving with
         //For Continuous moves, we don't want it to slow down, just affect direction
         //For fine moves, we want it to stop at our desired location
-        double distanceAway = targetPoses[numberOfSteps - stepsLeft].getRadius() == 0 ? distanceBetweenPoses(currentPose, targetPose) : distanceBetweenPoses(currentPose, endPose.getPose());
+        double distanceAway = targetPoses[numberOfSteps - stepsLeft].getRadius() == 0 ? drive.distanceFromPose(currentPose, targetPose) : drive.distanceFromPose(currentPose, endPose.getPose());
         double translationOutput = Math.min(translationalController.calculate(distanceAway, 0), targetPoses[numberOfSteps - stepsLeft].getPrecentageOutput());
 
         //Determines the distance from target we should be driving towards
@@ -75,20 +75,20 @@ public class DriveToPose extends Command {
 
         //Determine targetPose with a rotation of the slope between points
         Pose2d previousPose = stepsLeft + 1 > numberOfSteps ? currentPose : targetPoses[numberOfSteps - stepsLeft - 1].getPose();
-        Pose2d angleToPose = new Pose2d(targetPose.getX(), targetPose.getY(), Rotation2d.fromRadians(angleBetweenPoses(previousPose, targetPose)));
+        Pose2d angleToPose = new Pose2d(targetPose.getX(), targetPose.getY(), Rotation2d.fromRadians(drive.absoluteAngleFromPose(previousPose, targetPose)));
 
         //Offset angleToPose to angle towards correct spot on line, and fix angle to be target angle
         angleToPose.transformBy(new Transform2d(0, followingDistance, Rotation2d.kZero));
         angleToPose = new Pose2d(angleToPose.getX(), angleToPose.getY(), targetPose.getRotation());
         
         //Sets the direction to drive based off of angle to pose 
-        double angleOfDistance = angleBetweenPoses(currentPose, angleToPose);
+        double angleOfDistance = drive.absoluteAngleFromPose(currentPose, angleToPose);
 
         //Sends power to chassis
         drive.setDriveToPosePower(translationOutput, angleOfDistance, targetPose.getRotation());
 
         //Moves on to the next step once step is complete
-        if (distanceUntilContinue > distanceBetweenPoses(currentPose, targetPose) - translationalController.getErrorTolerance() && !(stepsLeft == numberOfSteps)) {
+        if (distanceUntilContinue > drive.distanceFromPose(currentPose, targetPose) - translationalController.getErrorTolerance() && !(stepsLeft == numberOfSteps)) {
             stepsLeft--;
         }
     }
@@ -101,13 +101,5 @@ public class DriveToPose extends Command {
     @Override
     public boolean isFinished() {
         return translationalController.atSetpoint() && rotationalController.atSetpoint() && stepsLeft == 1;
-    }
-
-    public double distanceBetweenPoses(Pose2d pose1, Pose2d pose2) {
-        return Math.sqrt(Math.pow(pose1.getX() - pose2.getX(), 2) + Math.pow(pose1.getY() - pose2.getY(), 2));
-    }
-
-    public double angleBetweenPoses (Pose2d pose1, Pose2d pose2) {
-        return Math.atan2(Math.abs(pose1.getY() - pose2.getY()), Math.abs(pose1.getX() - pose2.getX()));
     }
 }

@@ -100,9 +100,13 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         }
     }
 
+    /////////////////////////////////////////////////// Getters //////////////////////////////////////////////////////////////////
+
     public Pose2d getCurrentPose() {
         return this.getState().Pose;
     }
+
+    ////////////////////////////////////////////////// Setters //////////////////////////////////////////////////
 
     public void setDriveToPosePower(double targetVelocity, double driveAngle, Rotation2d targetAngle) {
         double currentVelocity = Math.sqrt(Math.pow(this.getState().Speeds.vyMetersPerSecond, 2) + Math.pow(this.getState().Speeds.vxMetersPerSecond, 2));
@@ -120,6 +124,8 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
             .withTargetDirection(targetAngle)
             );
     }
+
+    ///////////////////////////////////////////////// Limelight Methods ///////////////////////////////////////////////////////////////////////
 
     public void setUseMT1(boolean useMT1) {
         if (useMT1) useMT2 = false;
@@ -202,7 +208,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
 
 
-    //Pose Utility Methods (TODO: Move to new location)
+    /////////////////////////// Pose Utility Methods (TODO: Move to new location) //////////////////////////////////////////////////
 
     /**
      * Method gets the distance of a specified point from another point using a third point as a rotational reference
@@ -225,6 +231,13 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     public double distanceFromPose(Pose2d measurementPose, Pose2d origin){
         return Math.sqrt(Math.pow(measurementPose.getX() - origin.getX(), 2) + Math.pow(measurementPose.getY() - origin.getY(), 2));
+    }
+
+    /**
+     * Returns an angle 0 through pi/2 that is the angle between the two poses
+     */
+    public double absoluteAngleFromPose(Pose2d measurementPose, Pose2d origin){
+        return Math.atan2(Math.abs(measurementPose.getY() - origin.getY()), Math.abs(measurementPose.getX() - origin.getX()));
     }
 
 }
