@@ -43,7 +43,7 @@ public class FieldCentricControl extends Command {
         double m = 1 / (1 - deadband);
         double b = 1 - m;
         double y = Math.copySign((Math.abs(input) * m) + b, input);
-        if (y < deadband) y = 0;
+        if (Math.abs(input) < deadband) y = 0;
 
         return y;
     }
