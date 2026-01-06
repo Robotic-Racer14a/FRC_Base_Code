@@ -27,7 +27,8 @@ public class CircleToPose extends Command {
     private final PhoenixPIDController rotationalController = new PhoenixPIDController(0.001, 0, 0);
     
     /**
-     * Follows a circular path until getting to approach
+     * This command will act the same as DriveToPose, but with a ciruclar object avoidance
+     * If the path cuts through the circle, it will find the fastest path to go around the circle until it can drive in a striaght line again
      * This class is an example on how to use the drive to pose base for game-specific challenges, this game being reefscape
      * 
      * @param drive DriveSubsystem object
