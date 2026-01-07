@@ -6,6 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -16,6 +17,8 @@ import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.drive.DriveToPose;
 import frc.robot.commands.drive.FieldCentricControl;
 import frc.robot.commands.elevator.ElevatorJoystick;
@@ -63,6 +66,9 @@ public class RobotContainer {
 
     private void configureBindings() {
 
+
+        Trigger opLeftY = new Trigger(() -> operatorController.getLeftY() > 0.1);
+
         drive.setDefaultCommand(new FieldCentricControl(drive, driverController));
 
         elevator.setDefaultCommand(new ElevatorPID(elevator));
@@ -72,7 +78,7 @@ public class RobotContainer {
         driverController.x().onTrue(new InstantCommand(() -> drive.setUseMT1(false)));
         driverController.x().onTrue(new InstantCommand(() -> drive.setUseMT2(false)));
 
-        operatorController.a().whileTrue(new ElevatorJoystick(elevator, () -> operatorController.getLeftY()));
+        opLeftY.whileTrue(new ElevatorJoystick(elevator, () -> operatorController.getLeftY()));
         
         drive.registerTelemetry(logger::telemeterize);
     }
