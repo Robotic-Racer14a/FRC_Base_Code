@@ -67,7 +67,7 @@ public class RobotContainer {
     private void configureBindings() {
 
 
-        Trigger opLeftY = new Trigger(() -> operatorController.getLeftY() > 0.1);
+        
 
         drive.setDefaultCommand(new FieldCentricControl(drive, driverController));
 
@@ -78,6 +78,7 @@ public class RobotContainer {
         driverController.x().onTrue(new InstantCommand(() -> drive.setUseMT1(false)));
         driverController.x().onTrue(new InstantCommand(() -> drive.setUseMT2(false)));
 
+        Trigger opLeftY = new Trigger(() -> Math.abs(operatorController.getLeftY()) > 0.1);
         opLeftY.whileTrue(new ElevatorJoystick(elevator, () -> operatorController.getLeftY()));
         
         drive.registerTelemetry(logger::telemeterize);
