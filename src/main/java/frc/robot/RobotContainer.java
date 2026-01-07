@@ -31,8 +31,7 @@ public class RobotContainer {
 
         SmartDashboard.putData("Auto Mode", autoChooser);
 
-        configureBindings();
-
+        configureBindings();    
     }
 
     private void configureBindings() {
