@@ -27,6 +27,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
         currentConfigs.Inverted = InvertedValue.Clockwise_Positive;
         currentConfigs.NeutralMode = NeutralModeValue.Brake;
+        
         elevatorMotor.getConfigurator().apply(currentConfigs);
         elevatorFollower.getConfigurator().apply(currentConfigs);
         elevatorFollower.setControl(new Follower(27, true));
@@ -75,7 +76,7 @@ public class ElevatorSubsystem extends SubsystemBase {
             Math.min(Math.abs(power), ElevatorConstants.MAX_POWER), 
             power
         );
-
+        //System.out.println(power);
         elevatorMotor.set(power);
     }
 
@@ -83,7 +84,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public void runWithPID() {
         setElevatorPower(
-            elevatorController.calculate(getTargetPose(), getCurrentPoseInches())
+            elevatorController.calculate(getCurrentPoseInches(), getTargetPose())
         );
     }
 
