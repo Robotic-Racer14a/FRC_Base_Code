@@ -8,7 +8,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.SystemVariables;
@@ -21,8 +23,34 @@ public class ElevatorSubsystem extends SubsystemBase {
     private PIDController elevatorController = new PIDController(ElevatorConstants.KP, ElevatorConstants.KI, ElevatorConstants.KD);
     private AnalogInput stringPot = new AnalogInput(3);
     private double targetPose = 0;
+    private final GenericEntry kP, kI, kD;
     
     public ElevatorSubsystem () {
+
+        kP =
+            Shuffleboard.getTab("ElevatorPID")
+                .add("kP", ElevatorConstants.KP)
+                .withWidget("Number Slider")
+                .withPosition(1, 1)
+                .withSize(2, 1)
+                .getEntry();
+
+        kI =
+            Shuffleboard.getTab("ElevatorPID")
+                .add("kI", ElevatorConstants.KI)
+                .withWidget("Number Slider")
+                .withPosition(1, 2)
+                .withSize(2, 1)
+                .getEntry();
+
+        kD =
+            Shuffleboard.getTab("ElevatorPID")
+                .add("kD", ElevatorConstants.KD)
+                .withWidget("Number Slider")
+                .withPosition(1, 3)
+                .withSize(2, 1)
+                .getEntry();
+
         var currentConfigs = new MotorOutputConfigs();
 
         currentConfigs.Inverted = InvertedValue.Clockwise_Positive;
@@ -39,7 +67,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        //updatePIDFromDash();
+        updatePIDFromDash();
         updateSmartDashboard();
         SystemVariables.elevatorAtTarget = isElevatorAtTarget();
     }
@@ -92,9 +120,9 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     private void updatePIDFromDash() {
         elevatorController.setPID(
-            SmartDashboard.getNumber("Elevator/ElevatorP", ElevatorConstants.KP),
-            SmartDashboard.getNumber("Elevator/ElevatorI", ElevatorConstants.KI),
-            SmartDashboard.getNumber("Elevator/ElevatorD", ElevatorConstants.KD)
+            kP.getDouble(ElevatorConstants.KP),
+            kI.getDouble(ElevatorConstants.KI),
+            kD.getDouble(ElevatorConstants.KD)
         );
     }
 

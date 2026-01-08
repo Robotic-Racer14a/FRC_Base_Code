@@ -66,9 +66,6 @@ public class RobotContainer {
 
     private void configureBindings() {
 
-
-        
-
         //drive.setDefaultCommand(new FieldCentricControl(drive, driverController));
 
         elevator.setDefaultCommand(new ElevatorPID(elevator));
