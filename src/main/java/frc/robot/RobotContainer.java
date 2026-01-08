@@ -69,7 +69,7 @@ public class RobotContainer {
 
         
 
-        drive.setDefaultCommand(new FieldCentricControl(drive, driverController));
+        //drive.setDefaultCommand(new FieldCentricControl(drive, driverController));
 
         elevator.setDefaultCommand(new ElevatorPID(elevator));
 
@@ -80,6 +80,9 @@ public class RobotContainer {
 
         Trigger opLeftY = new Trigger(() -> Math.abs(operatorController.getLeftY()) > 0.1);
         opLeftY.whileTrue(new ElevatorJoystick(elevator, () -> operatorController.getLeftY()));
+
+        operatorController.a().onTrue(new InstantCommand(() -> elevator.setTargetPose(10)));
+        operatorController.b().onTrue(new InstantCommand(() -> elevator.setTargetPose(20)));
         
         drive.registerTelemetry(logger::telemeterize);
     }
