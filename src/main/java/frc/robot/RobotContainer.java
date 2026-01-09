@@ -43,21 +43,6 @@ public class RobotContainer {
     public RobotContainer() {
         autoChooser.setDefaultOption("Do Nothing", new WaitCommand(1));
 
-        autoChooser.addOption("Auto One", new ParallelCommandGroup(
-            new InstantCommand(() -> elevator.setTargetPose(30)),
-            new DriveToPose(drive, new Pose2d(0,0, Rotation2d.kZero))
-        ));
-
-        autoChooser.addOption("Auto Two", new SequentialCommandGroup(
-            new InstantCommand(() -> elevator.setTargetPose(30)),
-            new DriveToPose(drive, new Pose2d(0,0, Rotation2d.kZero))
-        ));
-
-        autoChooser.addOption("Auto Three", new ParallelRaceGroup(
-            new WaitCommand(10),
-            new DriveToPose(drive, new Pose2d(0,0, Rotation2d.kZero))
-        ));
-
         SmartDashboard.putData("Auto Mode", autoChooser);
 
         configureBindings();    
