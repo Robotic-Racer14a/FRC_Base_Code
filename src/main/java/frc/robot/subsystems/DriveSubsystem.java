@@ -9,6 +9,7 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -42,8 +43,8 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     public final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
-    private final double maxAcceleration = 2 * .02; //2 m/s with 20 ms interval
-    private final double maxTranslationalAngleChange = Units.degreesToRadians(180) * .02; //180 degrees per second with 20 ms interval
+    private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(2); // 2 Meters per second
+    private final SlewRateLimiter translationalAngleLimiter = new SlewRateLimiter(Units.degreesToRadians(180)); // 2 Meters per second
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
     private boolean useMT1, useMT2;
@@ -109,19 +110,18 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     ////////////////////////////////////////////////// Setters //////////////////////////////////////////////////
 
     public void setDriveToPosePower(double targetVelocity, double driveAngle, Rotation2d targetAngle) {
-        double currentVelocity = Math.sqrt(Math.pow(this.getState().Speeds.vyMetersPerSecond, 2) + Math.pow(this.getState().Speeds.vxMetersPerSecond, 2));
-        double currentTranslationAngle = Math.atan2(this.getState().Speeds.vyMetersPerSecond, this.getState().Speeds.vxMetersPerSecond);
 
-        targetVelocity = targetVelocity < currentVelocity ? Math.max(targetVelocity, currentVelocity - maxAcceleration) : Math.min(targetVelocity, currentVelocity + maxAcceleration);
-        driveAngle = driveAngle < currentTranslationAngle ? Math.max(driveAngle, currentTranslationAngle - maxTranslationalAngleChange) : Math.min(driveAngle, currentTranslationAngle + maxTranslationalAngleChange);
+        targetVelocity = accelerationLimiter.calculate(targetVelocity);
+        driveAngle = translationalAngleLimiter.calculate(driveAngle);
 
         double xPow = targetVelocity * Math.cos(driveAngle);
         double yPow = targetVelocity * Math.sin(driveAngle);
 
         this.setControl(
-            driveToPoseController.withVelocityX(xPow)
-            .withVelocityY(yPow)
-            .withTargetDirection(targetAngle)
+            driveToPoseController
+                .withVelocityX(xPow)
+                .withVelocityY(yPow)
+                .withTargetDirection(targetAngle)
             );
     }
 
