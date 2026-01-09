@@ -24,7 +24,7 @@ public class ElevatorJoystick extends Command{
     
     @Override
     public void execute() {
-        elevator.setElevatorPower(power.get());
+        elevator.setElevatorPower(power.get() * -0.1);
     }
     
     @Override
@@ -35,5 +35,6 @@ public class ElevatorJoystick extends Command{
     @Override
     public void end(boolean finished) {
         elevator.setElevatorPower(0);
+        elevator.setTargetPose(elevator.getCurrentPose());
     }
 }

@@ -8,6 +8,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -22,6 +23,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     private TalonFX elevatorFollower = new TalonFX(28, "Upper");
     private PIDController elevatorController = new PIDController(ElevatorConstants.KP, ElevatorConstants.KI, ElevatorConstants.KD);
     private AnalogInput stringPot = new AnalogInput(3);
+    private SlewRateLimiter filter = new SlewRateLimiter(4);
     private double targetPose = 0;
     private final GenericEntry kP, kI, kD;
     
@@ -30,7 +32,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         kP =
             Shuffleboard.getTab("ElevatorPID")
                 .add("kP", ElevatorConstants.KP)
-                .withWidget("Number Slider")
+                .withWidget("Text Display")
                 .withPosition(1, 1)
                 .withSize(2, 1)
                 .getEntry();
@@ -38,7 +40,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         kI =
             Shuffleboard.getTab("ElevatorPID")
                 .add("kI", ElevatorConstants.KI)
-                .withWidget("Number Slider")
+                .withWidget("Text Display")
                 .withPosition(1, 2)
                 .withSize(2, 1)
                 .getEntry();
@@ -46,7 +48,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         kD =
             Shuffleboard.getTab("ElevatorPID")
                 .add("kD", ElevatorConstants.KD)
-                .withWidget("Number Slider")
+                .withWidget("Text Display")
                 .withPosition(1, 3)
                 .withSize(2, 1)
                 .getEntry();
@@ -83,12 +85,12 @@ public class ElevatorSubsystem extends SubsystemBase {
         return stringPot.getValue();
     }
 
-    public double getCurrentPoseInches() {
+    public double getCurrentPose() {
         return (getCurrentPoseTicks() / ElevatorConstants.TICKS_PER_INCH) - ElevatorConstants.STRINGPOT_ZERO;
     }
 
     public boolean isElevatorAtTarget() {
-        return Math.abs(getTargetPose() - getCurrentPoseInches()) < ElevatorConstants.POSE_TOLERANCE;
+        return Math.abs(getTargetPose() - getCurrentPose()) < ElevatorConstants.POSE_TOLERANCE;
     }
 
     ///////////////////// Setters ////////////////////////////////
@@ -99,12 +101,12 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public void setElevatorPower(double power) {
         power += ElevatorConstants.STATIC_FEEDFORWARD;
-        power += ElevatorConstants.VELO_FEEDFORWARD * elevatorMotor.getVelocity().getValueAsDouble();
         power = Math.copySign(
             Math.min(Math.abs(power), ElevatorConstants.MAX_POWER), 
             power
         );
         //System.out.println(power);
+        power = filter.calculate(power);
         elevatorMotor.set(power);
     }
 
@@ -112,7 +114,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public void runWithPID() {
         setElevatorPower(
-            elevatorController.calculate(getCurrentPoseInches(), getTargetPose())
+            elevatorController.calculate(getCurrentPose(), getTargetPose())
         );
     }
 
@@ -128,8 +130,9 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     private void updateSmartDashboard() {
         SmartDashboard.putNumber("Elevator/Elevator Target", getTargetPose());
-        SmartDashboard.putNumber("Elevator/Elevator Current Inches", getCurrentPoseInches());
+        SmartDashboard.putNumber("Elevator/Elevator Current Inches", getCurrentPose());
         SmartDashboard.putNumber("Elevator/Elevator Current Ticks", getCurrentPoseTicks());
+        SmartDashboard.putNumber("Elevator/Elevator Current Velo", elevatorMotor.getVelocity().getValueAsDouble());
     }
 
 }
