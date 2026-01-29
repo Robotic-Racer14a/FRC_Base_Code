@@ -11,9 +11,6 @@ public class DriveToPose extends Command {
 
     private final DriveSubsystem drive;
     private final DriveToPoseObject[] targetPoses;
-
-    private final PIDController translationalController = new PIDController(0.001, 0, 0);
-    private final PhoenixPIDController rotationalController = new PhoenixPIDController(0.001, 0, 0);
     
     public DriveToPose (DriveSubsystem drive, DriveToPoseObject... intermediatePoses) {
         this.drive = drive;

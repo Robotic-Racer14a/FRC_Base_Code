@@ -7,14 +7,18 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -41,10 +45,13 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
             .withDriveRequestType(DriveRequestType.Velocity); 
 
     public final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+
+    ///////////////////////////////////// Drive to Pose Controllers ////////////////////////////////////
+    private final PIDController translationalController = new PIDController(0.001, 0, 0);
+    private final PhoenixPIDController rotationalController = new PhoenixPIDController(0.001, 0, 0);
+    private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(2); // 2 Meters per second
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
-    private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(2); // 2 Meters per second
-    private final SlewRateLimiter translationalAngleLimiter = new SlewRateLimiter(Units.degreesToRadians(180)); // 2 Meters per second
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
     private boolean useMT1, useMT2;
@@ -109,7 +116,28 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     ////////////////////////////////////////////////// Setters //////////////////////////////////////////////////
 
+    /**
+     * 
+     * @param drivingPose Pose that will be the target pose for the translational controller
+     * @param anglePose Pose that will set the angle the robot will drive in
+     */
     
+    public void driveToPosition(Pose2d drivingPose, Pose2d anglePose, LinearVelocity maxSpeed) {
+
+        //Determine the sent velocity of the robot in meters per second
+        double translationalOutput = translationalController.calculate(distanceFromPose(drivingPose, getCurrentPose()));
+        translationalOutput = MathUtil.clamp(translationalOutput, -maxSpeed.in(MetersPerSecond), maxSpeed.in(MetersPerSecond));
+        translationalOutput = accelerationLimiter.calculate(translationalOutput);
+
+        //Apply velocity in the direction of the anglePose
+        Rotation2d angleToPose = absoluteAngleFromPose(anglePose, getCurrentPose());
+        setControl(
+            driveToPoseController
+                .withVelocityX(translationalOutput * Math.cos(angleToPose.getRadians()))
+                .withVelocityY(translationalOutput * Math.cos(angleToPose.getRadians()))
+                .withTargetDirection(anglePose.getRotation())
+        );
+    }
 
     ///////////////////////////////////////////////// Limelight Methods ///////////////////////////////////////////////////////////////////////
 
@@ -219,11 +247,8 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         return Math.sqrt(Math.pow(measurementPose.getX() - origin.getX(), 2) + Math.pow(measurementPose.getY() - origin.getY(), 2));
     }
 
-    /**
-     * Returns an angle 0 through pi/2 that is the angle between the two poses
-     */
-    public double absoluteAngleFromPose(Pose2d measurementPose, Pose2d origin){
-        return Math.atan2(Math.abs(measurementPose.getY() - origin.getY()), Math.abs(measurementPose.getX() - origin.getX()));
+    public Rotation2d absoluteAngleFromPose(Pose2d measurementPose, Pose2d origin){
+        return Rotation2d.fromRadians(Math.atan2(measurementPose.getY() - origin.getY(), measurementPose.getX() - origin.getX()));
     }
 
 }
