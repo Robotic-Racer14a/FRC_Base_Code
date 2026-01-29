@@ -61,14 +61,14 @@ public class DriveToPose extends Command {
             double angleFromPose = drive.absoluteAngleFromPose(nextPose, currentPose);
             double angleBetweenPoses = angleToPose + angleFromPose;
 
-            distanceUntilContinue = targetPoses[numberOfSteps - stepsLeft].getRadius() / Math.tan(angleBetweenPoses / 2);
+            distanceUntilContinue = targetPoses[numberOfSteps - stepsLeft].getDistanceUntilBypass() / Math.tan(angleBetweenPoses / 2);
         }
 
         //Determines the speed the robot should be driving with
         //For Continuous moves, we don't want it to slow down, just affect direction
         //For fine moves, we want it to stop at our desired location
-        double distanceAway = targetPoses[numberOfSteps - stepsLeft].getRadius() == 0 ? drive.distanceFromPose(currentPose, targetPose) : drive.distanceFromPose(currentPose, endPose.getPose());
-        double translationOutput = Math.min(translationalController.calculate(distanceAway, 0), targetPoses[numberOfSteps - stepsLeft].getPrecentageOutput());
+        double distanceAway = targetPoses[numberOfSteps - stepsLeft].getDistanceUntilBypass() == 0 ? drive.distanceFromPose(currentPose, targetPose) : drive.distanceFromPose(currentPose, endPose.getPose());
+        double translationOutput = Math.min(translationalController.calculate(distanceAway, 0), targetPoses[numberOfSteps - stepsLeft].getMaxSpeedPercentage());
 
         //Determines the distance from target we should be driving towards
         followingDistance = Math.max(distanceAway - followingDistance, 0);

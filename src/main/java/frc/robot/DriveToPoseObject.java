@@ -1,21 +1,29 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.units.measure.LinearVelocity;
+import frc.robot.SystemVariables.DrivetrainConstants;
 
 public class DriveToPoseObject {
 
     private final Pose2d pose;
-    private final double radius;
-    private final double precentageOutput;
+    private final double distanceUntilBypass;
+    private final LinearVelocity stepSpeed;
     
-    public DriveToPoseObject(Pose2d pose, double radius, double precentageOutput) {
+    public DriveToPoseObject(Pose2d pose, double distanceUntilBypass, LinearVelocity stepSpeed) {
         this.pose = pose;
-        this.radius = radius;
-        this.precentageOutput = precentageOutput;
+        this.distanceUntilBypass = distanceUntilBypass;
+        this.stepSpeed = stepSpeed;
     }
 
-    public DriveToPoseObject(Pose2d pose, double radius) {
-        this(pose, radius, 1);
+    public DriveToPoseObject(Pose2d pose, double distanceUntilBypass) {
+        this(pose, distanceUntilBypass, MetersPerSecond.of(DrivetrainConstants.MaxSpeed));
+    }
+
+    public DriveToPoseObject(Pose2d pose, LinearVelocity stepSpeed) {
+        this(pose, 0, stepSpeed);
     }
 
     public DriveToPoseObject(Pose2d pose) {
@@ -26,11 +34,11 @@ public class DriveToPoseObject {
         return pose;
     }
 
-    public double getRadius() {
-        return radius;
+    public double getDistanceUntilBypass() {
+        return distanceUntilBypass;
     }
 
-    public double getPrecentageOutput() {
-        return precentageOutput;
+    public double getMaxSpeedPercentage() {
+        return stepSpeed.in(MetersPerSecond) / DrivetrainConstants.MaxSpeed;
     }
 }
