@@ -24,6 +24,7 @@ public class RobotContainer {
     private final CommandXboxController operatorController = new CommandXboxController(1);
     
     public final DriveSubsystem drive = TunerConstants.createDrivetrain();
+
     public final ElevatorSubsystem elevator = new ElevatorSubsystem();
 
     private final Telemetry logger = new Telemetry(drive.MaxSpeed);
@@ -44,6 +45,7 @@ public class RobotContainer {
         drive.setDefaultCommand(new FieldCentricControl(drive, driverController));
 
         elevator.setDefaultCommand(new ElevatorPID(elevator));
+        driverController.a().whileTrue(new ElevatorJoystick(elevator, () -> operatorController.getLeftY()));
 
         driverController.a().onTrue(new InstantCommand(() -> drive.setUseMT1(true)));
         driverController.b().onTrue(new InstantCommand(() -> drive.setUseMT2(true)));

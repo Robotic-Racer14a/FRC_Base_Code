@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.SystemVariables;
 import frc.robot.subsystems.ElevatorSubsystem;
 
-public class ElevatorPID extends Command{
+public class ElevatorPID extends Command {
 
     private ElevatorSubsystem elevator;
 
@@ -15,7 +15,7 @@ public class ElevatorPID extends Command{
     
     @Override
     public void initialize() {
-
+        elevator.setTargetPose(elevator.getCurrentPosition());
     }
     
     @Override
