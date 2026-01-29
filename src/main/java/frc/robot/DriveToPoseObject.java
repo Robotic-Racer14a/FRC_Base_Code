@@ -38,7 +38,7 @@ public class DriveToPoseObject {
         return distanceUntilBypass;
     }
 
-    public double getMaxSpeedPercentage() {
-        return stepSpeed.in(MetersPerSecond) / DrivetrainConstants.MaxSpeed;
+    public LinearVelocity getMaxSpeedPercentage() {
+        return stepSpeed;
     }
 }
