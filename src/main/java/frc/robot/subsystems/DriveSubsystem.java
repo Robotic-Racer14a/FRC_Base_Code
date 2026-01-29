@@ -109,21 +109,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     ////////////////////////////////////////////////// Setters //////////////////////////////////////////////////
 
-    public void setDriveToPosePower(double targetVelocity, double driveAngle, Rotation2d targetAngle) {
-
-        targetVelocity = accelerationLimiter.calculate(targetVelocity);
-        driveAngle = translationalAngleLimiter.calculate(driveAngle);
-
-        double xPow = targetVelocity * Math.cos(driveAngle);
-        double yPow = targetVelocity * Math.sin(driveAngle);
-
-        this.setControl(
-            driveToPoseController
-                .withVelocityX(xPow)
-                .withVelocityY(yPow)
-                .withTargetDirection(targetAngle)
-            );
-    }
+    
 
     ///////////////////////////////////////////////// Limelight Methods ///////////////////////////////////////////////////////////////////////
 
