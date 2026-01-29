@@ -136,7 +136,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         setControl(
             driveToPoseController
                 .withVelocityX(translationalOutput * Math.cos(angleToPose.getRadians()))
-                .withVelocityY(translationalOutput * Math.cos(angleToPose.getRadians()))
+                .withVelocityY(translationalOutput * Math.sin(angleToPose.getRadians()))
                 .withTargetDirection(anglePose.getRotation())
         );
     }
