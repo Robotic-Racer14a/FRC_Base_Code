@@ -7,7 +7,6 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
@@ -42,13 +41,13 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     public final SwerveRequest.FieldCentricFacingAngle driveToPoseController = new SwerveRequest.FieldCentricFacingAngle()
             .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
-            .withDriveRequestType(DriveRequestType.Velocity); 
+            .withDriveRequestType(DriveRequestType.Velocity)
+            .withHeadingPID(0.001, 0, 0); 
 
     public final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
     ///////////////////////////////////// Drive to Pose Controllers ////////////////////////////////////
     private final PIDController translationalController = new PIDController(0.001, 0, 0);
-    private final PhoenixPIDController rotationalController = new PhoenixPIDController(0.001, 0, 0);
     private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(2); // 2 Meters per second
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
@@ -78,6 +77,9 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, modules);
+
+        translationalController.setTolerance(Units.inchesToMeters(0.5));
+
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -114,7 +116,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         return this.getState().Pose;
     }
 
-    ////////////////////////////////////////////////// Setters //////////////////////////////////////////////////
+    ////////////////////////////////////////////////// Drive To Pose Methods //////////////////////////////////////////////////
 
     /**
      * 
@@ -137,6 +139,10 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
                 .withVelocityY(translationalOutput * Math.cos(angleToPose.getRadians()))
                 .withTargetDirection(anglePose.getRotation())
         );
+    }
+
+    public boolean isRobotAtTarget() {
+        return translationalController.atSetpoint();
     }
 
     ///////////////////////////////////////////////// Limelight Methods ///////////////////////////////////////////////////////////////////////

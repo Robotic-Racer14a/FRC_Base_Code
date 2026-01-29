@@ -38,7 +38,11 @@ public class DriveToPoseObject {
         return distanceUntilBypass;
     }
 
-    public LinearVelocity getMaxSpeedPercentage() {
+    public boolean isFineMove() {
+        return getDistanceUntilBypass() == 0;
+    }
+
+    public LinearVelocity getMaxSpeed() {
         return stepSpeed;
     }
 }
