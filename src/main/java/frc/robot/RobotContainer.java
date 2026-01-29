@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.commands.drive.FieldCentricControl;
 import frc.robot.commands.elevator.ElevatorJoystick;
 import frc.robot.commands.elevator.ElevatorPID;
 import frc.robot.generated.TunerConstants;
@@ -40,7 +41,7 @@ public class RobotContainer {
 
     private void configureBindings() {
 
-        //drive.setDefaultCommand(new FieldCentricControl(drive, driverController));
+        drive.setDefaultCommand(new FieldCentricControl(drive, driverController));
 
         elevator.setDefaultCommand(new ElevatorPID(elevator));
 
