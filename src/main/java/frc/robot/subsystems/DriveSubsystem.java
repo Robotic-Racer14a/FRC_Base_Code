@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.LimelightHelpers;
+import frc.robot.SystemVariables.TurretConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
@@ -114,6 +115,10 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     public Pose2d getCurrentPose() {
         return this.getState().Pose;
+    }
+
+    public Pose2d getTurretPose() {
+        return this.getState().Pose.transformBy(new Transform2d(TurretConstants.offsetFromCenter, Rotation2d.kZero));
     }
 
     ////////////////////////////////////////////////// Drive To Pose Methods //////////////////////////////////////////////////
@@ -247,7 +252,6 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
         return measurementPose.getTranslation();
     }
-
 
     public double distanceFromPose(Pose2d measurementPose, Pose2d origin){
         return Math.sqrt(Math.pow(measurementPose.getX() - origin.getX(), 2) + Math.pow(measurementPose.getY() - origin.getY(), 2));
