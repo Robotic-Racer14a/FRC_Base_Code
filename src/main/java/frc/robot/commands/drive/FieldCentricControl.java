@@ -1,8 +1,5 @@
 package frc.robot.commands.drive;
 
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.DriveSubsystem;
@@ -46,7 +43,7 @@ public class FieldCentricControl extends Command {
         double m = 1 / (1 - deadband);
         double b = 1 - m;
         double y = Math.copySign((Math.abs(input) * m) + b, input);
-        if (y < deadband) y = 0;
+        if (Math.abs(input) < deadband) y = 0;
 
         return y;
     }
