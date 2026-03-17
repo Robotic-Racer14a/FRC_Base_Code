@@ -49,7 +49,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     ///////////////////////////////////// Drive to Pose Controllers ////////////////////////////////////
     private final PIDController translationalController = new PIDController(0.001, 0, 0);
-    private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(2); // 2 Meters per second per second
+    private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(2, 100, 0); // 2 Meters per second per second
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
@@ -132,7 +132,8 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     public void driveToPosition(Pose2d drivingPose, Pose2d anglePose, LinearVelocity maxSpeed) {
 
         //Determine the sent velocity of the robot in meters per second
-        double translationalOutput = translationalController.calculate(distanceFromPose(drivingPose, getCurrentPose()));
+        double distance = distanceFromPose(drivingPose, getCurrentPose()) + distanceFromPose(drivingPose, anglePose);
+        double translationalOutput = -translationalController.calculate(distance);
         translationalOutput = MathUtil.clamp(translationalOutput, -maxSpeed.in(MetersPerSecond), maxSpeed.in(MetersPerSecond));
         translationalOutput = accelerationLimiter.calculate(translationalOutput);
 
