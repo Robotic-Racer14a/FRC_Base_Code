@@ -48,13 +48,12 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     public final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
     ///////////////////////////////////// Drive to Pose Controllers ////////////////////////////////////
-    private final PIDController translationalController = new PIDController(0.001, 0, 0);
+    private final PIDController translationalController = new PIDController(1, 0, 0);
     private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(2, 100, 0); // 2 Meters per second per second
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
-    private boolean useMT1, useMT2;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -89,8 +88,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     @Override
     public void periodic() {
 
-        if (useMT1) updatePoseWithMT1();
-        else if (useMT2) updatePoseWithMT2();
+        updatePoseWithMT1();
         
         /*
          * Periodically try to apply the operator perspective.
@@ -153,20 +151,14 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     ///////////////////////////////////////////////// Limelight Methods ///////////////////////////////////////////////////////////////////////
 
-    public void setUseMT1(boolean useMT1) {
-        if (useMT1) useMT2 = false;
-        this.useMT1 = useMT1;
-    }
-    
-    public void setUseMT2(boolean useMT2) {
-        if (useMT2) useMT1 = false;
-        this.useMT2 = useMT2;
-    }
-
     public void updatePoseWithMT1() {
         boolean updateVision = true;
         
+        LimelightHelpers.SetRobotOrientation("limelight", getCurrentPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
         LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight");
+        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+
+        Rotation2d currentOrientation = null;
 
         if(mt1 != null) {
           
@@ -184,37 +176,23 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
                 updateVision = false;
             }
             if(updateVision) {
-                setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,Math.toRadians(1)));
-                addVisionMeasurement(
-                    mt1.pose,
-                    Utils.fpgaToCurrentTime(mt1.timestampSeconds));
+                currentOrientation = mt1.pose.getRotation();
             }
         }
-    }
 
-    public void updatePoseWithMT2() {
-        boolean updateVision = true;
+        if (currentOrientation == null) {
+            currentOrientation = getCurrentPose().getRotation();
+        }
+
         
-        LimelightHelpers.SetRobotOrientation("limelight", getCurrentPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
-        LimelightHelpers.PoseEstimate mt2_blue = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
-        if(Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble()) > 720) { // if our angular velocity is greater than 720 degrees per second, ignore vision updates
-          updateVision = false;
+        
+        if(mt2 != null && mt2.tagCount != 0 &&Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble()) > 720) { // if our angular velocity is greater than 720 degrees per second, ignore vision updates
+          setVisionMeasurementStdDevs(VecBuilder.fill(0.15,0.15,Math.toRadians(10))); 
+                addVisionMeasurement(
+                    new Pose2d(mt2.pose.getTranslation(), currentOrientation),
+                    Utils.fpgaToCurrentTime(mt2.timestampSeconds));
         }
 
-        if (mt2_blue != null) {
-            if(mt2_blue.tagCount == 0)
-            {
-                updateVision = false;
-            }
-            if(updateVision)
-            {
-                
-                setVisionMeasurementStdDevs(VecBuilder.fill(0.15,0.15,9999999)); //x and Y were 0.7
-                addVisionMeasurement(
-                    mt2_blue.pose,
-                    Utils.fpgaToCurrentTime(mt2_blue.timestampSeconds));
-            }
-        }
     }
 
     private void startSimThread() {

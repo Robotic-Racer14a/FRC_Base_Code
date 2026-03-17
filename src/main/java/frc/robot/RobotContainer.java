@@ -45,12 +45,6 @@ public class RobotContainer {
     private void configureBindings() {
 
         drive.setDefaultCommand(new FieldCentricControl(drive, driverController));
-
-
-        driverController.a().onTrue(new InstantCommand(() -> drive.setUseMT1(true)));
-        driverController.b().onTrue(new InstantCommand(() -> drive.setUseMT2(true)));
-        driverController.x().onTrue(new InstantCommand(() -> drive.setUseMT1(false)));
-        driverController.x().onTrue(new InstantCommand(() -> drive.setUseMT2(false)));
     }
 
     public Command getAutonomousCommand() {
