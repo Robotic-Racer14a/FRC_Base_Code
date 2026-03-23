@@ -19,11 +19,13 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.LimelightHelpers;
 import frc.robot.generated.TunerConstants;
@@ -44,7 +46,6 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     public final SwerveRequest.FieldCentricFacingAngle driveToPoseController = new SwerveRequest.FieldCentricFacingAngle()
             .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
             .withDriveRequestType(DriveRequestType.Velocity)
-            .withMaxAbsRotationalRate(MaxAngularRate)
             .withHeadingPID(7, 0, 0); 
 
     public final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
@@ -54,8 +55,8 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         .getStructTopic("Robot Pose", Pose2d.struct).publish();
 
     ///////////////////////////////////// Drive to Pose Controllers ////////////////////////////////////
-    private final PIDController translationalController = new PIDController(1, 0, 0);
-    private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(2, 100, 0); // 2 Meters per second per second
+    private final PIDController translationalController = new PIDController(5, 0, 0.08);
+    private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(100, -2, 0); 
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
@@ -130,22 +131,24 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
      * @param anglePose Pose that will set the angle the robot will drive in
      */
     
-    public void driveToPosition(Pose2d drivingPose, Pose2d anglePose, LinearVelocity maxSpeed) {
+    public void driveToPosition(Pose2d drivingPose, Pose2d anglePose, LinearVelocity maxSpeed, AngularVelocity maxAngularSpeed) {
 
-        //Determine the sent velocity of the robot in meters per second
-        double distance = distanceFromPose(drivingPose, getCurrentPose()) + distanceFromPose(drivingPose, anglePose);
-        double translationalOutput = -translationalController.calculate(distance);
-        translationalOutput = MathUtil.clamp(translationalOutput, -maxSpeed.in(MetersPerSecond), maxSpeed.in(MetersPerSecond));
+        double distanceAway = distanceFromPose(drivingPose, getCurrentPose()) + distanceFromPose(drivingPose, anglePose);
+
+        // Determine the sent velocity of the robot in meters per second
+        double translationalOutput = translationalController.calculate(distanceAway);
+        translationalOutput = MathUtil.clamp(translationalOutput, -maxSpeed.in(MetersPerSecond),
+                maxSpeed.in(MetersPerSecond));
         translationalOutput = accelerationLimiter.calculate(translationalOutput);
 
-        //Apply velocity in the direction of the anglePose
-        Rotation2d angleToPose = absoluteAngleFromPose(anglePose, getCurrentPose());
+        // Apply velocity in the direction of the anglePose
+        Rotation2d angleToPose = absoluteAngleFromPose(getCurrentPose(), anglePose);
         setControl(
-            driveToPoseController
-                .withVelocityX(translationalOutput * Math.cos(angleToPose.getRadians()))
-                .withVelocityY(translationalOutput * Math.sin(angleToPose.getRadians()))
-                .withTargetDirection(anglePose.getRotation())
-        );
+                driveToPoseController
+                        .withVelocityX(translationalOutput * Math.cos(angleToPose.getRadians()))
+                        .withVelocityY(translationalOutput * Math.sin(angleToPose.getRadians()))
+                        .withMaxAbsRotationalRate(maxAngularSpeed)
+                        .withTargetDirection(anglePose.getRotation()));
     }
 
     public boolean isRobotAtTarget() {

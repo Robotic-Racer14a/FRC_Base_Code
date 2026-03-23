@@ -4,6 +4,9 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -26,17 +29,32 @@ public class RobotContainer {
     /* Path follower */
     private final SendableChooser<Command> autoChooser = new SendableChooser<>();
 
+    DriveToPoseObject[] blueOutpostOut = {
+        new DriveToPoseObject(new Pose2d(4,0.5,Rotation2d.kZero), 0.25),
+        new DriveToPoseObject(new Pose2d(5.5,0.5,Rotation2d.kZero), 0.25, MetersPerSecond.of(1))
+    };
+
+    DriveToPoseObject[] blueOutpostIn = {
+        new DriveToPoseObject(new Pose2d(5.5,0.5,Rotation2d.kZero), 0.25),
+        new DriveToPoseObject(new Pose2d(4,0.5,Rotation2d.kZero), 0.25, MetersPerSecond.of(1))
+    };
+
     public RobotContainer() {
         autoChooser.setDefaultOption("Do Nothing", new WaitCommand(1));
 
         autoChooser.addOption("Run Poses", 
             new SequentialCommandGroup(
-                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(1,1,Rotation2d.kZero), 0.25)),
-                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(2,2,Rotation2d.k180deg), 0.25)),
-                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(4,2,Rotation2d.kZero), 0.25)),
-                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(4,4,Rotation2d.k180deg), 0.25)),
-                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(1,1,Rotation2d.kZero)))
-        ));
+                new DriveToPose(drive, 
+                    blueOutpostOut[0],
+                    blueOutpostOut[1],
+                    new DriveToPoseObject(new Pose2d(8,1,Rotation2d.kCCW_90deg), 0.75),
+                    new DriveToPoseObject(new Pose2d(8,4,Rotation2d.kCCW_90deg), 0.75),
+                    new DriveToPoseObject(new Pose2d(6,4,Rotation2d.k180deg), 0.75),
+                    new DriveToPoseObject(new Pose2d(6,2,Rotation2d.kCW_90deg), 0.75),
+                    blueOutpostIn[0],
+                    blueOutpostIn[1],
+                    new DriveToPoseObject(new Pose2d(1,1,Rotation2d.kZero))
+        )));
 
         SmartDashboard.putData("Auto Mode", autoChooser);
 
