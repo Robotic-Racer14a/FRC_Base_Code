@@ -17,6 +17,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -42,9 +44,14 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     public final SwerveRequest.FieldCentricFacingAngle driveToPoseController = new SwerveRequest.FieldCentricFacingAngle()
             .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
             .withDriveRequestType(DriveRequestType.Velocity)
-            .withHeadingPID(0.001, 0, 0); 
+            .withMaxAbsRotationalRate(MaxAngularRate)
+            .withHeadingPID(7, 0, 0); 
 
     public final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+
+    
+    StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("Robot Pose", Pose2d.struct).publish();
 
     ///////////////////////////////////// Drive to Pose Controllers ////////////////////////////////////
     private final PIDController translationalController = new PIDController(1, 0, 0);
@@ -88,6 +95,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     public void periodic() {
 
         updatePoseWithLimelight("limelight");
+        robotPosePublisher.set(getCurrentPose());
         
         /*
          * Periodically try to apply the operator perspective.

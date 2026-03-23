@@ -32,8 +32,10 @@ public class RobotContainer {
         autoChooser.addOption("Run Poses", 
             new SequentialCommandGroup(
                 new DriveToPose(drive, new DriveToPoseObject(new Pose2d(1,1,Rotation2d.kZero), 0.25)),
-                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(2,2,Rotation2d.kZero), 0.25)),
-                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(1,1,Rotation2d.kZero), 0.25))
+                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(2,2,Rotation2d.k180deg), 0.25)),
+                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(4,2,Rotation2d.kZero), 0.25)),
+                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(4,4,Rotation2d.k180deg), 0.25)),
+                new DriveToPose(drive, new DriveToPoseObject(new Pose2d(1,1,Rotation2d.kZero)))
         ));
 
         SmartDashboard.putData("Auto Mode", autoChooser);
