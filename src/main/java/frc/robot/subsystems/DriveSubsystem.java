@@ -25,7 +25,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.LimelightHelpers;
 import frc.robot.generated.TunerConstants;
@@ -57,6 +56,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     ///////////////////////////////////// Drive to Pose Controllers ////////////////////////////////////
     private final PIDController translationalController = new PIDController(5, 0, 0.08);
     private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(100, -2, 0); 
+    private final SlewRateLimiter directionalLimiter = new SlewRateLimiter(Math.PI);
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
@@ -142,11 +142,16 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         translationalOutput = accelerationLimiter.calculate(translationalOutput);
 
         // Apply velocity in the direction of the anglePose
-        Rotation2d angleToPose = absoluteAngleFromPose(getCurrentPose(), anglePose);
+        double angleToPose = absoluteAngleFromPose(getCurrentPose(), anglePose).getRadians();
+
+        double limitedAngleToPose = directionalLimiter.calculate(angleToPose);
+
+        if (drivingPose.equals(anglePose) || Math.abs(limitedAngleToPose) - Math.abs(angleToPose) < Math.toRadians(5)) limitedAngleToPose = angleToPose;
+        
         setControl(
                 driveToPoseController
-                        .withVelocityX(translationalOutput * Math.cos(angleToPose.getRadians()))
-                        .withVelocityY(translationalOutput * Math.sin(angleToPose.getRadians()))
+                        .withVelocityX(translationalOutput * Math.cos(limitedAngleToPose))
+                        .withVelocityY(translationalOutput * Math.sin(limitedAngleToPose))
                         .withMaxAbsRotationalRate(maxAngularSpeed)
                         .withTargetDirection(anglePose.getRotation()));
     }

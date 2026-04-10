@@ -5,7 +5,6 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -47,10 +46,10 @@ public class RobotContainer {
                 new DriveToPose(drive, 
                     blueOutpostOut[0],
                     blueOutpostOut[1],
-                    new DriveToPoseObject(new Pose2d(8,1,Rotation2d.kCCW_90deg), 0.75),
-                    new DriveToPoseObject(new Pose2d(8,4,Rotation2d.kCCW_90deg), 0.75),
-                    new DriveToPoseObject(new Pose2d(6,4,Rotation2d.k180deg), 0.75),
-                    new DriveToPoseObject(new Pose2d(6,2,Rotation2d.kCW_90deg), 0.75),
+                    new DriveToPoseObject(new Pose2d(8,1,Rotation2d.kCCW_90deg), 0.5),
+                    new DriveToPoseObject(new Pose2d(8,4,Rotation2d.kCCW_90deg), 0.5),
+                    new DriveToPoseObject(new Pose2d(6,4,Rotation2d.k180deg), 0.5),
+                    new DriveToPoseObject(new Pose2d(6,2,Rotation2d.kCW_90deg), 0.5),
                     blueOutpostIn[0],
                     blueOutpostIn[1],
                     new DriveToPoseObject(new Pose2d(1,1,Rotation2d.kZero))
