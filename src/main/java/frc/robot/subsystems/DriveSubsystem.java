@@ -56,7 +56,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     ///////////////////////////////////// Drive to Pose Controllers ////////////////////////////////////
     private final PIDController translationalController = new PIDController(5, 0, 0.08);
     private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(100, -2, 0); 
-    private final SlewRateLimiter directionalLimiter = new SlewRateLimiter(Math.PI);
+    private final SlewRateLimiter directionalLimiter = new SlewRateLimiter(Math.PI/2);
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
