@@ -8,6 +8,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
@@ -56,7 +57,9 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     ///////////////////////////////////// Drive to Pose Controllers ////////////////////////////////////
     private final PIDController translationalController = new PIDController(5, 0, 0.08);
     private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(100, -2, 0); 
-    private final SlewRateLimiter directionalLimiter = new SlewRateLimiter(Math.PI/2);
+
+    private double previousDriveToPoseTime;
+    private double previousDriveToPoseDirection;
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
@@ -144,9 +147,21 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         // Apply velocity in the direction of the anglePose
         double angleToPose = absoluteAngleFromPose(getCurrentPose(), anglePose).getRadians();
 
-        double limitedAngleToPose = directionalLimiter.calculate(angleToPose);
+        //Limit Heading Change
+        double currentTime = MathSharedStore.getTimestamp();
+        double elapsedTime = currentTime - previousDriveToPoseTime;
 
-        if (drivingPose.equals(anglePose) || Math.abs(limitedAngleToPose) - Math.abs(angleToPose) < Math.toRadians(5)) limitedAngleToPose = angleToPose;
+        double targetChange = angleToPose - previousDriveToPoseDirection;
+        if (targetChange > Math.PI) targetChange -= 2 * Math.PI;
+        if (targetChange < -Math.PI) targetChange += 2 * Math.PI;
+
+        previousDriveToPoseDirection +=
+            MathUtil.clamp(
+                targetChange,
+                -Math.PI * elapsedTime,
+                Math.PI * elapsedTime);
+        previousDriveToPoseTime = currentTime;
+        double limitedAngleToPose = previousDriveToPoseDirection;
         
         setControl(
                 driveToPoseController
