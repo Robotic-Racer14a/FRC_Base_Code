@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -60,6 +61,11 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     private double previousDriveToPoseTime;
     private double previousDriveToPoseDirection;
+
+    private Pose2d targetPose = Pose2d.kZero;
+    private LinearVelocity maxPIDSpeed = MetersPerSecond.of(5), defaultPIDSpeed = maxPIDSpeed;
+    private AngularVelocity maxPIDAngularSpeed = RotationsPerSecond.of(1);
+    private double distanceUntilDone = 0.25, defaultDistance = distanceUntilDone;
    
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
@@ -100,6 +106,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
         updatePoseWithLimelight("limelight");
         robotPosePublisher.set(getCurrentPose());
+        SmartDashboard.putNumber("Drive Velo", getCurrentVelocity());
         
         /*
          * Periodically try to apply the operator perspective.
@@ -126,6 +133,10 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         return this.getState().Pose;
     }
 
+    public double getCurrentVelocity() {
+        return Math.sqrt(Math.pow(this.getState().Speeds.vxMetersPerSecond, 2) + Math.pow(this.getState().Speeds.vyMetersPerSecond, 2));
+    }
+
     ////////////////////////////////////////////////// Drive To Pose Methods //////////////////////////////////////////////////
 
     /**
@@ -134,32 +145,42 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
      * @param anglePose Pose that will set the angle the robot will drive in
      */
     
-    public void driveToPosition(Pose2d drivingPose, Pose2d anglePose, LinearVelocity maxSpeed, AngularVelocity maxAngularSpeed) {
+    public void driveToPosition() {
 
-        double distanceAway = distanceFromPose(drivingPose, getCurrentPose()) + distanceFromPose(drivingPose, anglePose);
+        double distanceAway = distanceFromPose(targetPose, getCurrentPose());
 
         // Determine the sent velocity of the robot in meters per second
         double translationalOutput = translationalController.calculate(distanceAway);
-        translationalOutput = MathUtil.clamp(translationalOutput, -maxSpeed.in(MetersPerSecond),
-                maxSpeed.in(MetersPerSecond));
+        translationalOutput = MathUtil.clamp(translationalOutput, -maxPIDSpeed.in(MetersPerSecond),
+                maxPIDSpeed.in(MetersPerSecond));
         translationalOutput = accelerationLimiter.calculate(translationalOutput);
 
         // Apply velocity in the direction of the anglePose
-        double angleToPose = absoluteAngleFromPose(getCurrentPose(), anglePose).getRadians();
+        double angleToPose = absoluteAngleFromPose(getCurrentPose(), targetPose).getRadians();
 
         //Limit Heading Change
         double currentTime = MathSharedStore.getTimestamp();
         double elapsedTime = currentTime - previousDriveToPoseTime;
 
         double targetChange = angleToPose - previousDriveToPoseDirection;
+        SmartDashboard.putNumber("Target Change", targetChange);
         if (targetChange > Math.PI) targetChange -= 2 * Math.PI;
         if (targetChange < -Math.PI) targetChange += 2 * Math.PI;
 
-        previousDriveToPoseDirection +=
-            MathUtil.clamp(
-                targetChange,
-                -Math.PI * elapsedTime,
-                Math.PI * elapsedTime);
+        //Min value is Math.PI
+        double maxDirectionChange = 0;
+        if (getCurrentVelocity() > 0.5) {
+            maxDirectionChange = (1 / getCurrentVelocity()) * (5 * Math.PI);
+        }
+
+        if (maxDirectionChange == 0) previousDriveToPoseDirection += targetChange;
+        else {
+            previousDriveToPoseDirection +=
+                MathUtil.clamp(
+                    targetChange,
+                    -Math.PI * elapsedTime,
+                    Math.PI * elapsedTime);
+        }
         previousDriveToPoseTime = currentTime;
         double limitedAngleToPose = previousDriveToPoseDirection;
         
@@ -167,12 +188,36 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
                 driveToPoseController
                         .withVelocityX(translationalOutput * Math.cos(limitedAngleToPose))
                         .withVelocityY(translationalOutput * Math.sin(limitedAngleToPose))
-                        .withMaxAbsRotationalRate(maxAngularSpeed)
-                        .withTargetDirection(anglePose.getRotation()));
+                        .withMaxAbsRotationalRate(maxPIDAngularSpeed)
+                        .withTargetDirection(targetPose.getRotation()));
     }
 
     public boolean isRobotAtTarget() {
-        return translationalController.atSetpoint();
+        return distanceFromPose(targetPose, getCurrentPose()) <= distanceUntilDone;
+    }
+
+    public void setNewTarget(Pose2d targetPose, double distanceUntilDone, LinearVelocity maxPIDSpeed) {
+        this.targetPose = targetPose;
+        this.distanceUntilDone = distanceUntilDone;
+        this.maxPIDSpeed = maxPIDSpeed;
+    }
+
+    public void setNewTarget(Pose2d targetPose, LinearVelocity maxPIDSpeed) {
+        this.targetPose = targetPose;
+        this.distanceUntilDone = defaultDistance;
+        this.maxPIDSpeed = maxPIDSpeed;
+    }
+
+    public void setNewTarget(Pose2d targetPose, double distanceUntilDone) {
+        this.targetPose = targetPose;
+        this.distanceUntilDone = distanceUntilDone;
+        this.maxPIDSpeed = defaultPIDSpeed;
+    }
+
+    public void setNewTarget(Pose2d targetPose) {
+        this.targetPose = targetPose;
+        this.distanceUntilDone = defaultDistance;
+        this.maxPIDSpeed = defaultPIDSpeed;
     }
 
     ///////////////////////////////////////////////// Limelight Methods ///////////////////////////////////////////////////////////////////////
