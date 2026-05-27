@@ -63,7 +63,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     private double previousDriveToPoseDirection;
 
     private Pose2d targetPose = Pose2d.kZero;
-    private LinearVelocity maxPIDSpeed = MetersPerSecond.of(5), defaultPIDSpeed = maxPIDSpeed;
+    private LinearVelocity maxPIDSpeed = MetersPerSecond.of(3), defaultPIDSpeed = maxPIDSpeed;
     private AngularVelocity maxPIDAngularSpeed = RotationsPerSecond.of(1);
     private double distanceUntilDone = 0.25, defaultDistance = distanceUntilDone;
    
