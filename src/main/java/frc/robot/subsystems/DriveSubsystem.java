@@ -154,6 +154,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         translationalOutput = MathUtil.clamp(translationalOutput, -maxPIDSpeed.in(MetersPerSecond),
                 maxPIDSpeed.in(MetersPerSecond));
         translationalOutput = accelerationLimiter.calculate(translationalOutput);
+        SmartDashboard.putNumber("Commanded Speed", -translationalOutput);
 
         // Apply velocity in the direction of the anglePose
         double angleToPose = absoluteAngleFromPose(getCurrentPose(), targetPose).getRadians();
@@ -170,7 +171,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         //Min value is Math.PI
         double maxDirectionChange = 0;
         if (getCurrentVelocity() > 0.5) {
-            maxDirectionChange = (1 / getCurrentVelocity()) * (5 * Math.PI);
+            maxDirectionChange = (1 / getCurrentVelocity()) * (defaultPIDSpeed.in(MetersPerSecond) * Math.PI);
         }
 
         if (maxDirectionChange == 0) previousDriveToPoseDirection += targetChange;
@@ -178,11 +179,17 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
             previousDriveToPoseDirection +=
                 MathUtil.clamp(
                     targetChange,
-                    -Math.PI * elapsedTime,
-                    Math.PI * elapsedTime);
+                    -maxDirectionChange * elapsedTime,
+                    maxDirectionChange * elapsedTime);
         }
         previousDriveToPoseTime = currentTime;
         double limitedAngleToPose = previousDriveToPoseDirection;
+
+        
+        SmartDashboard.putNumber("Actual Commanded Speed", Math.sqrt(
+            Math.pow(translationalOutput * Math.cos(limitedAngleToPose), 2) + 
+            Math.pow(translationalOutput * Math.sin(limitedAngleToPose), 2)
+            ));
         
         setControl(
                 driveToPoseController
