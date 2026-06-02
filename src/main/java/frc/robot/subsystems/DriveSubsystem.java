@@ -126,6 +126,10 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         return this.getState().Pose;
     }
 
+    public double getCurrentVelocity() {
+        return Math.sqrt(Math.pow(getState().Speeds.vxMetersPerSecond, 2) + Math.pow(getState().Speeds.vyMetersPerSecond, 2));
+    }
+
     ////////////////////////////////////////////////// Drive To Pose Methods //////////////////////////////////////////////////
 
     /**
@@ -155,11 +159,19 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         if (targetChange > Math.PI) targetChange -= 2 * Math.PI;
         if (targetChange < -Math.PI) targetChange += 2 * Math.PI;
 
-        previousDriveToPoseDirection +=
-            MathUtil.clamp(
-                targetChange,
-                -Math.PI * elapsedTime,
-                Math.PI * elapsedTime);
+        //Min value is Math.PI
+        double maxDirectionChange = 0;
+        if (getCurrentVelocity() > 0.5) {
+            maxDirectionChange = (1 / getCurrentVelocity()) * (maxSpeed.in(MetersPerSecond) * Math.PI);
+        }
+
+        if (maxDirectionChange == 0) previousDriveToPoseDirection += targetChange;
+            previousDriveToPoseDirection +=
+                MathUtil.clamp(
+                    targetChange,
+                    -maxDirectionChange * elapsedTime,
+                    maxDirectionChange * elapsedTime);
+        }
         previousDriveToPoseTime = currentTime;
         double limitedAngleToPose = previousDriveToPoseDirection;
         
