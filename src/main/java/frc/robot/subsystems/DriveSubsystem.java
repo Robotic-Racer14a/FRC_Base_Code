@@ -166,6 +166,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         }
 
         if (maxDirectionChange == 0) previousDriveToPoseDirection += targetChange;
+        else {
             previousDriveToPoseDirection +=
                 MathUtil.clamp(
                     targetChange,
