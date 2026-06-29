@@ -61,6 +61,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
 
     private double previousDriveToPoseTime;
     private double previousDriveToPoseDirection;
+    private double previousDriveToPoseVelo = 1;
 
     private Pose2d targetPose = Pose2d.kZero;
     private LinearVelocity maxPIDSpeed = MetersPerSecond.of(3), defaultPIDSpeed = maxPIDSpeed;
@@ -105,7 +106,6 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     public void periodic() {
 
         updatePoseWithLimelight("limelight");
-        robotPosePublisher.set(getCurrentPose());
         SmartDashboard.putNumber("Drive Velo", getCurrentVelocity());
         
         /*
@@ -146,6 +146,7 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
      */
     
     public void driveToPosition() {
+        robotPosePublisher.set(getCurrentPose());
 
         double distanceAway = distanceFromPose(targetPose, getCurrentPose());
 
@@ -185,6 +186,12 @@ public class DriveSubsystem extends TunerSwerveDrivetrain implements Subsystem {
         previousDriveToPoseTime = currentTime;
         double limitedAngleToPose = previousDriveToPoseDirection;
 
+        
+        if (Rotation2d.fromRadians(limitedAngleToPose).relativeTo(Rotation2d.fromRadians(angleToPose)).getDegrees() > 5 && translationalOutput > 1) {
+            translationalOutput = previousDriveToPoseVelo;
+        }
+        
+        previousDriveToPoseVelo = translationalOutput;
         
         SmartDashboard.putNumber("Actual Commanded Speed", Math.sqrt(
             Math.pow(translationalOutput * Math.cos(limitedAngleToPose), 2) + 
