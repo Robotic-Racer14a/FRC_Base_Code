@@ -41,6 +41,9 @@ public class Superstructure extends SubsystemBase{
         drive.setNewTarget(targetPose);
     }
 
+    public boolean isRobotAtTarget() {
+        return drive.isRobotAtTarget();
+    }
 
 
     private double joystickWithDeadband(double input, double deadband) {

@@ -4,7 +4,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
@@ -31,14 +34,39 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {}
 
+  int step = 1;
+  Timer timer = new Timer();
+
   @Override
   public void autonomousInit() {
+    timer.start();
     robot.enableDriveToPose();
   }
 
   @Override
   public void autonomousPeriodic() {
-    
+    if (step == 1){
+        robot.setDriveTarget(new Pose2d(1, 1, Rotation2d.kZero));
+        if (robot.isRobotAtTarget()) {
+          timer.reset();
+          step = 2;
+        }
+          
+    } else if (step == 2){
+        if (timer.get() > 1) {
+          step = 3;
+        }
+    } else if (step == 3) {
+      robot.setDriveTarget(new Pose2d(2, 2, Rotation2d.kZero));
+        if (robot.isRobotAtTarget()) {
+          timer.reset();
+          step = 4;
+        }
+    } else if (step == 4){
+        if (timer.get() > 1) {
+          step = 1;
+        }
+    } 
   }
 
   @Override
