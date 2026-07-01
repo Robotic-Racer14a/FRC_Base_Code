@@ -33,7 +33,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    
+    robot.enableDriveToPose();
   }
 
   @Override
@@ -42,10 +42,13 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void autonomousExit() {}
+  public void autonomousExit() {
+    robot.disableDriveToPose();
+  }
 
   @Override
   public void teleopInit() {
+    robot.disableDriveToPose();
   }
 
   @Override

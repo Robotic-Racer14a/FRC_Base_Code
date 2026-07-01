@@ -7,9 +7,9 @@ import frc.robot.subsystems.DriveSubsystem;
 
 public class Superstructure extends SubsystemBase{
     
-    DriveSubsystem drive = TunerConstants.createDrivetrain();
+    private DriveSubsystem drive = TunerConstants.createDrivetrain();
 
-    boolean enableDriveToPose = false;
+    private boolean enableDriveToPose = false;
 
     public Superstructure () {
 
@@ -17,7 +17,7 @@ public class Superstructure extends SubsystemBase{
 
     @Override
     public void periodic() {
-        
+        if (enableDriveToPose) drive.driveToPosition();
     }
     
 
